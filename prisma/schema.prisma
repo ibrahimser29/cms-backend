@@ -1,0 +1,90 @@
+
+generator client {
+  provider = "prisma-client-js"  
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  admin
+  participant
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String?
+  role      Role     @default(participant)
+  createdAt DateTime @default(now())
+  refreshTokens RefreshToken[]
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique   
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Section {
+  id         Int      @id @default(autoincrement())
+  key        String   @unique
+  type       String
+  title      String?
+  background String?
+  content    Json
+  images     String[]
+  order      Int      @default(0)
+  isActive   Boolean  @default(true)
+  updatedAt  DateTime @updatedAt
+  createdAt  DateTime @default(now())
+}
+
+model Wood {
+  id        Int            @id @default(autoincrement())
+  name      String
+  slug      String         @unique
+  image     String?
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+  features  WoodFeature[]
+
+  @@map("wood")
+}
+
+model PriceItem {
+  id          Int      @id @default(autoincrement())
+  category    String
+  length      Int
+  width       Int
+  thickness   Int
+  pricePerM3  Int
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("price_items")
+}
+
+enum FeatureType {
+  positive
+  negative
+}
+
+model WoodFeature {
+  id        Int         @id @default(autoincrement())
+  woodId    Int         @map("wood_id")
+  wood      Wood        @relation(fields: [woodId], references: [id], onDelete: Cascade)
+  content   String
+  type      FeatureType
+  sortOrder Int         @default(0) @map("sort_order")
+
+  @@map("wood_features")
+}
